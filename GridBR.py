@@ -61,9 +61,20 @@ class GridBR:
     
         return result_table
     
+    #Pour une jolie représentation mettant en couleur la BR
+    def highlight_max(self,s):
+        is_max = s == s.max()
+        return ['background-color: green' if v else '' for v in is_max]
+    
+    
 
     def __call__(self):
-        return self.A 
+        lst = self.grid()
+        colonnes = self.A
+        df = pd.DataFrame(lst, columns=colonnes)
+        df.index = self.A
+        df_style = df.style.apply(self.highlight_max)
+        return df, df_style
     
 
 
