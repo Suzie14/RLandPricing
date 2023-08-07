@@ -12,8 +12,8 @@ class Agent:
         self.p1 = self.pN-self.Xi*(self.pM-self.pN)
         self.pm = self.pM+self.Xi*(self.pM-self.pN)
         self.A = np.zeros(self.m)
-        for i in range (1,self.m+1):
-            self.A[i-1] = self.p1 + (i-1)*(self.pm-self.p1)/self.m
+        for i in range (self.m):
+            self.A[i] = self.p1 + i*(self.pm-self.p1)/(self.m-1)
         #self.S = np.zeros((self.m**(self.n*self.k),2))
         
         self.S = []
