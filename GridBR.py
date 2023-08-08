@@ -56,9 +56,6 @@ class GridBR:
 
         # Créer un tableau à double entrée
         result_table = [[self.profit_i([p_i, p_j]) for p_j in choice_p_j] for p_i in choice_p_i]
-        for row in result_table:
-            print(row)
-    
         return result_table
     
     #Pour une jolie représentation mettant en couleur la BR
@@ -66,15 +63,23 @@ class GridBR:
         is_max = s == s.max()
         return ['background-color: green' if v else '' for v in is_max]
     
-    
+    def BestResponse(self):
+        indices_argmax = np.argmax(self.grid(), axis=0)
+        BR = [self.A,self.A[indices_argmax.tolist()]]
+        return BR
+        
 
     def __call__(self):
         lst = self.grid()
         colonnes = self.A
         df = pd.DataFrame(lst, columns=colonnes)
         df.index = self.A
+        
         df_style = df.style.apply(self.highlight_max)
-        return df, df_style
+        
+        BR = self.BestResponse()
+        
+        return df, df_style, BR
     
 
 
