@@ -5,14 +5,17 @@ import resultsPriceandProfits as res
 
 class Agent: 
     
-    def __init__(self,nb_player=2,alpha=0.125,beta=10**(-5),delta=0.95):
+    def __init__(self,nb_player=2,alpha=0.125,beta=10**(-5),delta=0.95, pN=None, pC=None):
         self.m = 15
         self.n = nb_player
         self.k = 1
-        self.pM, self.pN = self.getPrices()
+        if pN == None or pC == None:
+            self.pC, self.pN = self.getPrices()
+        else:
+            self.pC, self.pN = pC, pN
         self.Xi = 0.1
-        self.p1 = self.pN-self.Xi*(self.pM-self.pN)
-        self.pm = self.pM+self.Xi*(self.pM-self.pN)
+        self.p1 = self.pN-self.Xi*(self.pC-self.pN)
+        self.pm = self.pC+self.Xi*(self.pC-self.pN)
         self.A = np.zeros(self.m)
         for i in range (self.m):
             self.A[i] = self.p1 + i*(self.pm-self.p1)/(self.m-1)
@@ -85,7 +88,7 @@ class Agent:
 
     
 class Env: 
-    def __init__(self, nb_players=2,a_value=2,mu_value=1/4,c_value=1): 
+    def __init__(self, nb_players=2,a_value=2,mu_value=1/4,c_value=1,binary_demand=False): 
         self.nb_players = nb_players
         self.a_value = a_value
         self.mu_value = mu_value
@@ -103,6 +106,17 @@ class Env:
         q = np.zeros(len(quant) - 1)
         for i in range(len(quant) - 1):
             q[i] = quant[i + 1] / sum(quant)
+        return q
+    
+    def binary_quantity(self, p): 
+        q = np.zeros(len(p))
+        min_indices = np.where(p == np.min(p))[0]  # Find indices of minimum prices
+    
+        # Distribute demand equally among players with the lowest prices
+        num_min_prices = len(min_indices)
+        if num_min_prices > 0:
+            q[min_indices] = 1 / num_min_prices
+    
         return q
 
     def __call__(self,p):
