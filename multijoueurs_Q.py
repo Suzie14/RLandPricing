@@ -5,7 +5,7 @@ import resultsPriceandProfits as res
 
 class Agent: 
     
-    def __init__(self,nb_player=2,alpha=0.125,beta=10**(-5),delta=0.95, pN=None, pC=None, binary_demand=False):
+    def __init__(self,nb_player=2,alpha=0.125,beta=10**(-5),delta=0.95, pN=None, pC=None, binary_demand=False, doubleQ=False):
         self.m = 15
         self.n = nb_player
         self.k = 1
@@ -24,8 +24,19 @@ class Agent:
         combinations = itertools.product(self.A, repeat=self.n)
         self.S = [list(combination) for combination in combinations]
         
-                    
-        self.Q = np.random.uniform(size = (self.m,self.m**(self.n*self.k)),
+        self.doubleQ = doubleQ
+        
+        if self.doubleQ: 
+            self.Q1 = np.random.uniform(size = (self.m,self.m**(self.n*self.k)),
+                                   low=-0.5,
+                                   high =0.5)
+        
+            self.Q2 = np.random.uniform(size = (self.m,self.m**(self.n*self.k)),
+                                   low=-0.5,
+                                   high =0.5)
+        
+        else :         
+            self.Q = np.random.uniform(size = (self.m,self.m**(self.n*self.k)),
                                    low=-0.5,
                                    high =0.5)
         
@@ -48,8 +59,13 @@ class Agent:
         return collusion_price, nash_price
     
     def get_next_action(self):
+        if self.doubleQ: 
+            Q = self.Q1 + self.Q2
+        else: 
+            Q = self.Q
+            
         if np.random.random() < 1-self.epsilon: 
-            return self.Q[:,self.s_ind].argmax()
+            return Q[:,self.s_ind].argmax()
         else: 
             return np.random.randint(self.m)
         
@@ -58,8 +74,14 @@ class Agent:
         
     def updateQ(self, p, q, c, t):#upateQ
         reward = self.get_reward(q,p,c)
-    
-        self.Q[self.a_ind, self.s_ind] = (1-self.alpha)*self.Q[self.a_ind, self.s_ind] + self.alpha*( reward + self.delta*self.Q[:,self.s_ind1].max())
+
+        if self.doubleQ:
+            if np.random.random() < 0.5: 
+                self.Q1[self.a_ind, self.s_ind] = (1-self.alpha)*self.Q1[self.a_ind, self.s_ind] + self.alpha*( reward + self.delta*self.Q2[self.Q1[:,self.s_ind1].argmax(),self.s_ind1])
+            else : 
+                self.Q2[self.a_ind, self.s_ind]
+        else: 
+            self.Q[self.a_ind, self.s_ind] = (1-self.alpha)*self.Q[self.a_ind, self.s_ind] + self.alpha*( reward + self.delta*self.Q[:,self.s_ind1].max())
         #print("Start")
         #print(reward)
         #print(self.Q[self.a_ind, self.s_ind1].max())
