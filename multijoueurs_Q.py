@@ -5,10 +5,11 @@ import resultsPriceandProfits as res
 
 class Agent: 
     
-    def __init__(self,nb_player=2,alpha=0.125,beta=10**(-5),delta=0.95, pN=None, pC=None):
+    def __init__(self,nb_player=2,alpha=0.125,beta=10**(-5),delta=0.95, pN=None, pC=None, binary_demand=False):
         self.m = 15
         self.n = nb_player
         self.k = 1
+        self.binary_demand = binary_demand
         if pN == None or pC == None:
             self.pC, self.pN = self.getPrices()
         else:
@@ -42,7 +43,7 @@ class Agent:
         self.s_t1 = None
     
     def getPrices(self):
-        prices = res.PriceOptimizer(nb_players=self.n)
+        prices = res.PriceOptimizer(nb_players=self.n,binary_demand=self.binary_demand)
         collusion_price, nash_price = prices()
         return collusion_price, nash_price
     
@@ -96,6 +97,8 @@ class Env:
         
         self.a = np.concatenate(([0], np.full(nb_players, a_value)))
         self.c = np.full(nb_players, c_value)
+        
+        self.binary_demand = binary_demand
     
     def f(self,p): 
         prime_p = np.array([0]+p)
@@ -115,12 +118,16 @@ class Env:
         # Distribute demand equally among players with the lowest prices
         num_min_prices = len(min_indices)
         if num_min_prices > 0:
-            q[min_indices] = 1 / num_min_prices
+            q[min_indices] = (self.a[min_indices+1] - np.min(p)) / num_min_prices
     
         return q
 
     def __call__(self,p):
-        return [self.quantity(p), p, self.c]
+        if self.binary_demand:
+            return [self.binary_quantity(p), p, self.c]
+        else:
+            return [self.quantity(p), p, self.c]
+    
     #prendre action et  renvoie la demande
     #renvoie q, q', p et p'
 
