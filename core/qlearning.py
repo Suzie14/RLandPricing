@@ -1,7 +1,7 @@
 import numpy as np
 import itertools
 
-import resultsPriceandProfits as res
+import core.prices as pr
 
 
 class Agent:
@@ -56,7 +56,7 @@ class Agent:
         self.s_t1 = None
 
     def getPrices(self):
-        prices = res.PriceOptimizer(
+        prices = pr.PriceOptimizer(
             nb_players=self.n, binary_demand=self.binary_demand)
         collusion_price, nash_price = prices()
         return collusion_price, nash_price
