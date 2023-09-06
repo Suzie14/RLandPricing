@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
+import sys
 import numpy as np
 import qlearning as q
-import sys
-
-sys.path.insert(1, '/Volumes/OS-Data/Suzie_data/RLandPricing/core')
-
+import time
 # import pickle
 
-
+start = time.time()
 aggregated_agents = []
 for nb_players in [2, 3, 4, 5]:
     total_rewards = []
@@ -65,6 +63,10 @@ for nb_players in [2, 3, 4, 5]:
         total_rewards.append(rewards)
 
     aggregated_agents.append(np.array(total_rewards).mean(axis=0))
+end = time.time()
 
 # with open('data_multiplayers.pkl', 'wb') as f:
- #   pickle.dump(aggregated_agents, f)
+#   pickle.dump(aggregated_agents, f)
+
+print(aggregated_agents)
+print(end-start)
