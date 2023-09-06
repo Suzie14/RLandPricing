@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-import sys
-import numpy as np
-import qlearning as q
 import time
+import core.qlearning as q
+import numpy as np
+
 # import pickle
 
 start = time.time()

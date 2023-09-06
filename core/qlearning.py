@@ -1,7 +1,7 @@
 import numpy as np
 import itertools
 
-import prices as pr
+import core.prices as pr
 
 
 class Agent:
