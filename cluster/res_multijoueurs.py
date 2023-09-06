@@ -7,10 +7,10 @@ import numpy as np
 
 start = time.time()
 aggregated_agents = []
-for nb_players in [2, 3, 4, 5]:
+for nb_players in [2, 3, 4, 5, 6]:
     total_rewards = []
 
-    for loop in range(1):
+    for loop in range(10):
         print("Loop:", loop)
         agents = [q.Agent(nb_player=nb_players) for _ in range(nb_players)]
         env = q.Env(nb_players=nb_players)
@@ -34,7 +34,7 @@ for nb_players in [2, 3, 4, 5]:
             agent.s_ind = s_ind
 
         # Phase itérative
-        for t in range(6):
+        for t in range(1000):
             # Actions et état t+1
             for agent in agents:
                 agent.a_ind = agent.get_next_action()
