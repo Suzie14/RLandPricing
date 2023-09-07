@@ -7,12 +7,12 @@ import numpy as np
 
 start = time.time()
 aggregated_agents = []
-for nb_players in [2, 3, 4, 5, 6]:
+for nb_players in [2, 3, 4, 5]:
     total_rewards = []
 
     for loop in range(10):
-        print("Loop:", loop)
-        agents = [q.Agent(nb_player=nb_players) for _ in range(nb_players)]
+        print("Loop:", loop, "NB PLAYERS:", nb_players)
+        agents = [q.Agent(nb_players=nb_players) for _ in range(nb_players)]
         env = q.Env(nb_players=nb_players)
 
         temps = []
@@ -29,7 +29,7 @@ for nb_players in [2, 3, 4, 5, 6]:
         for agent in agents:
             agent.s_t = s_t
 
-        s_ind = agents[0].find_index(agents[0].S, agents[0].s_t)
+        s_ind = agents[0].find_index(agents[0].s_t)
         for agent in agents:
             agent.s_ind = s_ind
 
@@ -43,7 +43,7 @@ for nb_players in [2, 3, 4, 5, 6]:
             for agent in agents:
                 agent.s_t1 = s_t1
 
-            s_ind1 = agents[0].find_index(agents[0].S, agents[0].s_t1)
+            s_ind1 = agents[0].find_index(agents[0].s_t1)
             for agent in agents:
                 agent.s_ind1 = s_ind1
 
