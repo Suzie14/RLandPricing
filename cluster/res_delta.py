@@ -10,8 +10,8 @@ aggregated_agents = []
 for delta in [0.95, 0.80, 0.65, 0.50, 0.35]:
     total_rewards = []
 
-    for loop in range(3):
-        print("Loop:", loop)
+    for loop in range(10):
+        print("Loop:", loop, "delta:", delta)
         agents = [q.Agent(delta=delta) for _ in range(2)]
         env = q.Env()
 
