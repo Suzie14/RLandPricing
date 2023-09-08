@@ -7,10 +7,11 @@ from core import qlearning as q
 
 start = time.time()
 aggregated_agents = []
-for delta in [0.95, 0.80, 0.65, 0.50, 0.35]:
+time_data = []
+for delta in [0.20, 0.35, 0.50, 0.65, 0.80, 0.95]:
     total_rewards = []
 
-    for loop in range(10):
+    for loop in range(20):
         print("Loop:", loop, "delta:", delta)
         agents = [q.Agent(delta=delta) for _ in range(2)]
         env = q.Env()
@@ -35,6 +36,9 @@ for delta in [0.95, 0.80, 0.65, 0.50, 0.35]:
 
         # Phase itérative
         for t in range(1000):
+            if t % 500 == 0:
+                inter_start = time.time()
+                print("t:", t)
             # Actions et état t+1
             for agent in agents:
                 agent.a_ind = agent.get_next_action()
@@ -60,12 +64,20 @@ for delta in [0.95, 0.80, 0.65, 0.50, 0.35]:
             for i, agent in enumerate(agents):
                 agent.updateQ(q=quant[i], p=price[i], c=cost[i], t=t)
 
+            if t % 500 == 0:
+                inter_end = time.time()
+                time_data.append(inter_end-inter_start)
+                print('average CPU', np.mean(time_data))
+
         total_rewards.append(rewards)
 
     aggregated_agents.append(np.array(total_rewards).mean(axis=0))
 
-# with open('data.pkl', 'wb') as f:
- #   pickle.dump(aggregated_agents, f)
 end = time.time()
+
+with open('data.pkl', 'wb') as f:
+    pickle.dump(aggregated_agents, f)
+
+
 print(aggregated_agents)
 print(end-start)
