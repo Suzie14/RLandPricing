@@ -21,11 +21,11 @@ for delta in [0.20, 0.35, 0.50, 0.65, 0.80, 0.95]:
         epsilon = []
         prices = []
 
-        # Initialisation des prix p0 (on va le faire directement dans chaque agent)
+        # Initialization of prices p0 (done directly in each agent)
         for agent in agents:
             agent.p = np.random.choice(agent.A)
 
-        # Initialisation de l'état
+        # Initialization of state
         s_t = env([agent.p for agent in agents])[1]
         for agent in agents:
             agent.s_t = s_t
@@ -34,12 +34,12 @@ for delta in [0.20, 0.35, 0.50, 0.65, 0.80, 0.95]:
         for agent in agents:
             agent.s_ind = s_ind
 
-        # Phase itérative
-        for t in range(1000):
-            if t % 500 == 0:
+        # Iterative phase
+        for t in range(10**6):
+            if t % 2*10**5 == 0:
                 inter_start = time.time()
                 print("t:", t)
-            # Actions et état t+1
+            # Actions and state at t+1
             for agent in agents:
                 agent.a_ind = agent.get_next_action()
 
@@ -64,7 +64,7 @@ for delta in [0.20, 0.35, 0.50, 0.65, 0.80, 0.95]:
             for i, agent in enumerate(agents):
                 agent.updateQ(q=quant[i], p=price[i], c=cost[i], t=t)
 
-            if t % 500 == 0:
+            if t % 2*10**5 == 0:
                 inter_end = time.time()
                 time_data.append(inter_end-inter_start)
                 print('average CPU', np.mean(time_data))
