@@ -3,15 +3,16 @@ import time
 import core.qlearning as q
 import numpy as np
 
-# import pickle
+import pickle
 
 start = time.time()
 aggregated_agents = []
+time_data = []
 for nb_players in [2, 3, 4, 5]:
     total_rewards = []
 
-    for loop in range(10):
-        print("Loop:", loop, "NB PLAYERS:", nb_players)
+    for loop in range(5):
+        print("loop:", loop, "NB PLAYERS:", nb_players)
         agents = [q.Agent(nb_players=nb_players) for _ in range(nb_players)]
         env = q.Env(nb_players=nb_players)
 
@@ -35,6 +36,10 @@ for nb_players in [2, 3, 4, 5]:
 
         # Phase itérative
         for t in range(1000):
+            if t % 500 == 0:
+                inter_start = time.time()
+                print("t:", t)
+
             # Actions et état t+1
             for agent in agents:
                 agent.a_ind = agent.get_next_action()
@@ -60,13 +65,18 @@ for nb_players in [2, 3, 4, 5]:
             for i, agent in enumerate(agents):
                 agent.updateQ(q=quant[i], p=price[i], c=cost[i], t=t)
 
+            if t % 500 == 0:
+                inter_end = time.time()
+                time_data.append(inter_end-inter_start)
+                print('average CPU', np.mean(time_data))
+
         total_rewards.append(rewards)
 
     aggregated_agents.append(np.array(total_rewards).mean(axis=0))
 end = time.time()
 
-# with open('data_multiplayers.pkl', 'wb') as f:
-#   pickle.dump(aggregated_agents, f)
+with open('data_multiplayers.pkl', 'wb') as f:
+    pickle.dump(aggregated_agents, f)
 
 print(aggregated_agents)
 print(end-start)
