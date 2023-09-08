@@ -36,7 +36,7 @@ for delta in [0.20, 0.35, 0.50, 0.65, 0.80, 0.95]:
 
         # Iterative phase
         for t in range(10**6):
-            if t % 2*10**5 == 0:
+            if t % (2*10**5) == 0:
                 inter_start = time.time()
                 print("t:", t)
             # Actions and state at t+1
@@ -64,7 +64,7 @@ for delta in [0.20, 0.35, 0.50, 0.65, 0.80, 0.95]:
             for i, agent in enumerate(agents):
                 agent.updateQ(q=quant[i], p=price[i], c=cost[i], t=t)
 
-            if t % 2*10**5 == 0:
+            if t % (2*10**5) == 0:
                 inter_end = time.time()
                 time_data.append(inter_end-inter_start)
                 print('average CPU', np.mean(time_data))

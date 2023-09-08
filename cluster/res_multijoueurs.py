@@ -36,7 +36,7 @@ for nb_players in [2, 3, 4, 5]:
 
         # Iterative phase
         for t in range(10**6):
-            if t % 2*10**5 == 0:
+            if t % (2*10**5) == 0:
                 inter_start = time.time()
                 print("t:", t)
 
@@ -65,7 +65,7 @@ for nb_players in [2, 3, 4, 5]:
             for i, agent in enumerate(agents):
                 agent.updateQ(q=quant[i], p=price[i], c=cost[i], t=t)
 
-            if t % 2*10**5 == 0:
+            if t % (2*10**5) == 0:
                 inter_end = time.time()
                 time_data.append(inter_end-inter_start)
                 print('average CPU', np.mean(time_data))
