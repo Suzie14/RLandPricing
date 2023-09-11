@@ -7,13 +7,15 @@ from core import qlearning as q
 start = time.time()
 aggregated_agents = []
 time_data = []
-for delta in [0.20, 0.35, 0.50, 0.65, 0.80, 0.95]:
+for demand, price in [[False, [None, None]], [True, [None, None]], [False, [1, 2]]]:
     total_rewards = []
 
     for loop in range(20):
-        print("Loop:", loop, "delta:", delta)
-        agents = [q.Agent(delta=delta) for _ in range(2)]
-        env = q.Env()
+        print("Loop:", loop, "binary demand : ",
+              demand, "prices variation:", price)
+        agents = [q.Agent(binary_demand=demand, pN=price[0],
+                          pC=price[1]) for _ in range(2)]
+        env = q.Env(binary_demand=demand)
 
         temps = []
         rewards = []
@@ -74,9 +76,8 @@ for delta in [0.20, 0.35, 0.50, 0.65, 0.80, 0.95]:
 
 end = time.time()
 
-with open('data_delta.pkl', 'wb') as f:
+with open('data_demand_grid.pkl', 'wb') as f:
     pickle.dump(aggregated_agents, f)
-
 
 print(aggregated_agents)
 print(end-start)
