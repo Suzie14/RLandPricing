@@ -7,12 +7,12 @@ from core import qlearning as q
 start = time.time()
 aggregated_agents = []
 time_data = []
-for delta in [0.20, 0.35, 0.50, 0.65, 0.80, 0.95]:
+for beta in [10**(-6), 10**(-5), 10**(-4), 10**(-3)]:
     total_rewards = []
 
     for loop in range(20):
-        print("Loop:", loop, "delta:", delta)
-        agents = [q.Agent(delta=delta) for _ in range(2)]
+        print("Loop:", loop, "beta:", beta)
+        agents = [q.Agent(beta=beta) for _ in range(2)]
         env = q.Env()
 
         temps = []
@@ -39,6 +39,7 @@ for delta in [0.20, 0.35, 0.50, 0.65, 0.80, 0.95]:
                 inter_start = time.time()
                 print("t:", t)
             # Actions and state at t+1
+
             for agent in agents:
                 agent.a_ind = agent.get_next_action()
 
@@ -74,9 +75,8 @@ for delta in [0.20, 0.35, 0.50, 0.65, 0.80, 0.95]:
 
 end = time.time()
 
-with open('data_delta.pkl', 'wb') as f:
+with open('data_epsilon.pkl', 'wb') as f:
     pickle.dump(aggregated_agents, f)
-
 
 print(aggregated_agents)
 print(end-start)

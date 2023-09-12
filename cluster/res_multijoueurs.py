@@ -3,16 +3,17 @@ import time
 import core.qlearning as q
 import numpy as np
 
-# import pickle
+import pickle
 
 start = time.time()
 aggregated_agents = []
+time_data = []
 for nb_players in [2, 3, 4, 5]:
     total_rewards = []
 
-    for loop in range(1):
-        print("Loop:", loop)
-        agents = [q.Agent(nb_player=nb_players) for _ in range(nb_players)]
+    for loop in range(20):
+        print("loop:", loop, "NB PLAYERS:", nb_players)
+        agents = [q.Agent(nb_players=nb_players) for _ in range(nb_players)]
         env = q.Env(nb_players=nb_players)
 
         temps = []
@@ -20,22 +21,26 @@ for nb_players in [2, 3, 4, 5]:
         epsilon = []
         prices = []
 
-        # Initialisation des prix p0 (on va le faire directement dans chaque agent)
+        # Initialization of prices p0 (done directly in each agent)
         for agent in agents:
             agent.p = np.random.choice(agent.A)
 
-        # Initialisation de l'état
+        # Initialization of state
         s_t = env([agent.p for agent in agents])[1]
         for agent in agents:
             agent.s_t = s_t
 
-        s_ind = agents[0].find_index(agents[0].S, agents[0].s_t)
+        s_ind = agents[0].find_index(agents[0].s_t)
         for agent in agents:
             agent.s_ind = s_ind
 
-        # Phase itérative
-        for t in range(6):
-            # Actions et état t+1
+        # Iterative phase
+        for t in range(10**6):
+            if t % (2*10**5) == 0:
+                inter_start = time.time()
+                print("t:", t)
+
+            # Actions and state at t+1
             for agent in agents:
                 agent.a_ind = agent.get_next_action()
 
@@ -43,7 +48,7 @@ for nb_players in [2, 3, 4, 5]:
             for agent in agents:
                 agent.s_t1 = s_t1
 
-            s_ind1 = agents[0].find_index(agents[0].S, agents[0].s_t1)
+            s_ind1 = agents[0].find_index(agents[0].s_t1)
             for agent in agents:
                 agent.s_ind1 = s_ind1
 
@@ -60,13 +65,18 @@ for nb_players in [2, 3, 4, 5]:
             for i, agent in enumerate(agents):
                 agent.updateQ(q=quant[i], p=price[i], c=cost[i], t=t)
 
+            if t % (2*10**5) == 0:
+                inter_end = time.time()
+                time_data.append(inter_end-inter_start)
+                print('average CPU', np.mean(time_data))
+
         total_rewards.append(rewards)
 
-    aggregated_agents.append(np.array(total_rewards).mean(axis=0))
+    aggregated_agents.append(np.array(total_rewards))
 end = time.time()
 
-# with open('data_multiplayers.pkl', 'wb') as f:
-#   pickle.dump(aggregated_agents, f)
+with open('data_multiplayers.pkl', 'wb') as f:
+    pickle.dump(aggregated_agents, f)
 
 print(aggregated_agents)
 print(end-start)

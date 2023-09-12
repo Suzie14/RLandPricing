@@ -66,6 +66,12 @@ class GridBR:
         BR = [self.A, self.A[indices_argmax.tolist()]]
         return BR
 
+    def BR_price(self, price):
+        BR = self.BestResponse()
+        for i in range(len(BR[0])):
+            if BR[0][i] == price:
+                return BR[1][i]
+
     def __call__(self):
         lst = self.grid()
         colonnes = self.A
