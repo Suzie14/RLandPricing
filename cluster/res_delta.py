@@ -70,7 +70,7 @@ for delta in [0.20, 0.35, 0.50, 0.65, 0.80, 0.95]:
 
         total_rewards.append(rewards)
 
-    aggregated_agents.append(np.array(total_rewards).mean(axis=0))
+    aggregated_agents.append(np.array(total_rewards))
 
 end = time.time()
 

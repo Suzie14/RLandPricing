@@ -70,7 +70,7 @@ for alpha in [0.1, 0.2, 0.3, 0.4, 0.5]:
 
         total_rewards.append(rewards)
 
-    aggregated_agents.append(np.array(total_rewards).mean(axis=0))
+    aggregated_agents.append(np.array(total_rewards))
 
 end = time.time()
 

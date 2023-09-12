@@ -71,7 +71,7 @@ for rep in [[0.025, 10**(-6)], [0.1, 0.5*10**(-5)], [0.2, 10**(-5)], [0.05, 1.5*
 
         total_rewards.append(rewards)
 
-    aggregated_agents.append(np.array(total_rewards).mean(axis=0))
+    aggregated_agents.append(np.array(total_rewards))
 
 end = time.time()
 

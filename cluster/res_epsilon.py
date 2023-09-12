@@ -71,7 +71,7 @@ for beta in [10**(-6), 10**(-5), 10**(-4), 10**(-3)]:
 
         total_rewards.append(rewards)
 
-    aggregated_agents.append(np.array(total_rewards).mean(axis=0))
+    aggregated_agents.append(np.array(total_rewards))
 
 end = time.time()
 

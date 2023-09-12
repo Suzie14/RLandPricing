@@ -72,7 +72,7 @@ for nb_players in [2, 3, 4, 5]:
 
         total_rewards.append(rewards)
 
-    aggregated_agents.append(np.array(total_rewards).mean(axis=0))
+    aggregated_agents.append(np.array(total_rewards))
 end = time.time()
 
 with open('data_multiplayers.pkl', 'wb') as f:

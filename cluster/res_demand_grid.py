@@ -72,7 +72,7 @@ for demand, price in [[False, [None, None]], [True, [None, None]], [False, [1, 2
 
         total_rewards.append(rewards)
 
-    aggregated_agents.append(np.array(total_rewards).mean(axis=0))
+    aggregated_agents.append(np.array(total_rewards))
 
 end = time.time()
 
