@@ -7,15 +7,15 @@ from core import qlearning as q
 start = time.time()
 aggregated_agents = []
 time_data = []
-for demand, price in [[False, [None, None]], [True, [None, None]], [False, [1, 2]]]:
+for demand_init, price_init in [[False, [None, None]], [True, [None, None]], [False, [1, 2]]]:
     total_rewards = []
 
     for loop in range(20):
         print("Loop:", loop, "binary demand : ",
-              demand, "prices variation:", price)
-        agents = [q.Agent(binary_demand=demand, pN=price[0],
-                          pC=price[1]) for _ in range(2)]
-        env = q.Env(binary_demand=demand)
+              demand_init, "prices variation:", price_init)
+        agents = [q.Agent(binary_demand=demand_init, pN=price_init[0],
+                          pC=price_init[1]) for _ in range(2)]
+        env = q.Env(binary_demand=demand_init)
 
         temps = []
         rewards = []
