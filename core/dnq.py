@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import torch
 import numpy as np
 
 import torch
@@ -11,19 +12,18 @@ import core.prices as pr
 
 class DQN(nn.Module):
 
-    def __init__(self, n_observations, n_actions, fct1_dim=128, fct2_dim=128, alpha):
+    def __init__(self, n_states, n_actions, fct1_dim=128, fct2_dim=128):
         super(DQN, self).__init__()
-        
-        self.n_observations = n_observations
+
+        self.n_states = n_states
         self.n_actions = n_actions
         self.fct1_dim = fct1_dim
         self.fct2_dim = fct2_dim
-        
-        self.layer1 = nn.Linear(self.n_observations, self.fct1_dim)
+
+        self.layer1 = nn.Linear(self.n_states, self.fct1_dim)
         self.layer2 = nn.Linear(self.fct1_dim, self.fct2_dim)
         self.layer3 = nn.Linear(self.fct2_dim, self.n_actions)
-        
-        self.optimizer = optim.Adam(self.parameters(), alpha)
+
         self.loss = nn.MSELoss()
         self.device = torch.device(
             "cuda" if torch.cuda.is_available() else "cpu")
@@ -39,19 +39,27 @@ class DQN(nn.Module):
 
 
 class Agent:
-    def __init__(self, nb_players=2, alpha=0.125, beta=10**(-5), delta=0.95, pN=None, pC=None, binary_demand=False, k=1000, batch_size=32):
+    def __init__(self, nb_players=2, alpha=0.125, beta=10**(-5), delta=0.95, pN=None, pC=None, binary_demand=False, max_mem_size=1000, batch_size=32):
         self.m = 15
         self.n = nb_players
-        ##memory k : we can now change it
-        self.k = k
+
+        # memory k : we can now change it
+        self.mem_size = max_mem_size
         self.mem_count = 0
         self.batch_size = batch_size
-        
-        n_observations=(self.m**(self.k*self.n))
-        
+
+        # state doesn't depend directly of the past states
+        self.n_states = (self.m**(self.n*self.mem_size))
+
+        # hyperparameters
+        self.epsilon = 1
+        self.alpha = alpha
+        self.beta = beta
+        self.delta = delta
+
         self.binary_demand = binary_demand
         if pN == None or pC == None:
-            self.pC, self.pN = self.getPrices()
+            self.pC, self.pN = self._get_prices()
         else:
             self.pC, self.pN = pC, pN
         self.Xi = 0.1
@@ -61,87 +69,55 @@ class Agent:
         for i in range(self.m):
             self.A[i] = self.p1 + i*(self.pm-self.p1)/(self.m-1)
 
-        # combinations = itertools.product(self.A, repeat=self.n)
-        # self.S = [list(combination) for combination in combinations]
+        self.Q_eval = DQN(n_states=self.n_states,
+                          n_actions=self.m, alpha=self.alpha)
+        self.optimizer = optim.Adam(self.parameters(), lr=alpha)
 
-        
+        self.states = np.zeros((self.mem_size, *self.n_states), np.float32)
+        self.a_ind = None
+        self.reward = None
+        self.s_t1 = None
+        self.p = None
 
-
-# A CHANGER
-        self.Q_eval = DQN(n_observations=n_observations,n_actions=self.m,alpha=self.alpha)
-
-#####################################
-
-        self.epsilon = 1
-        self.alpha = alpha
-        self.beta = beta
-        self.delta = delta
-
-        self.find_ind = {self.A[i]: chr(i + 65) for i in range(len(self.A))}
-
-        self.s_t = np.zeros((self.mem_size, *n_observations), np.float32)
-        self.a_t = np.zeros((self.mem_size, *n_observations), np.float32)
-        self.reward = np.zeros((self.mem_size, *n_observations), np.float32)
-        self.s_t1 = np.zeros((self.mem_size, *n_observations), np.float32)
-
-    def getPrices(self):
+    def _get_prices(self):
         prices = pr.PriceOptimizer(
             nb_players=self.n, binary_demand=self.binary_demand)
         collusion_price, nash_price = prices()
         return collusion_price, nash_price
 
-    def get_next_action(self, observation):
-
-        if np.random.random() < 1-self.epsilon:
-            state = torch.tensor([observation]).to(self.Q_eval.device)
-            actions = self.Q_eval.forward(state)
-            action = torch.argmax(actions).item()
+    def get_next_action(self):
+        if np.random.random() < 1 - self.epsilon:
+            state = torch.tensor(self.s_t, dtype=torch.float32)
+            q_values = self.Q_eval(state)
+            return q_values.argmax().item()
         else:
-            action = np.random.randint(self.m)
-            
-        return action
-        ################
+            return np.random.choice(self.A)
 
     def get_reward(self, q, p, c):
         return (p-c)*q
-    
-    def transition(self, state, action, reward, state_1):
+
+    def transition(self, st_1):
         index = self.mem_count % self.k
-        self.s_t[index] = state
-        self.s_t1[index] = state_1
-        self.a_t[index] = action
-        self.reward_memory = reward
-        
+        self.states[index] = st_1
+
         self.mem_count += 1
-        
 
-    def updateQ(self, t):  # upateQ
-        if self.mem_count < self.batch_size:
-            return
-        
-        self.Q_eval.optimizer.zero_grad()
-        
-        max_mem = min(self.mem_count, self.k)
-        batch = np.random.choice(self.k,self.batch_size,replace=False)
-        
-        batch_index = np.arange(self.batch_size, dtype=np.int32)
-        
-        action_batch = torch.tensor(self.a_t[batch]).to(self.Q_eval.device)
-        state_batch = torch.tensor(self.s_t[batch]).to(self.Q_eval.device)
-        state_batch_1 = torch.tensor(self.s_t1[batch]).to(self.Q_eval.device)
-        reward_batch = torch.tensor(self.reward[batch]).to(self.Q_eval.device)
-        
-        q_eval = self.Q_eval.forward(state_batch)[batch_index, action_batch]
-        q_next = self.Q_eval.forward(state_batch_1)
-        
-        q_target = reward_batch + self.delta*torch.max(q_next, dim=1)[0]
-        
-        loss = self.Q_eval.loss(q_target, q_eval).to(self.Q_eval.device)
+    def updateQ(self, p, q, c, t):
+        reward = self.get_reward(q, p, c)
+
+        state = torch.tensor(self.s_t, dtype=torch.float32)
+        q_values = self.Q_eval(state)
+
+        target = reward + self.delta * q_values.max()
+        loss = nn.MSELoss()(q_values[self.a_ind], target)
+
+        self.optimizer.zero_grad()
         loss.backward()
-        self.Q_eval.optimizer.step()
-        
-        self.epsilon = np.exp(-self.beta*t)
+        self.optimizer.step()
 
+        self.p = self.A[self.a_ind]
+        self.s_t = self.s_t1
+        self.epsilon = np.exp(-self.beta * t)
 
 
 class Env:

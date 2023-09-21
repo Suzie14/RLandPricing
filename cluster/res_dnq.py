@@ -9,7 +9,7 @@ for rep in [[0.025, 10**(-6)], [0.1, 0.5*10**(-5)], [0.2, 10**(-5)], [0.05, 1.5*
 
     for loop in range(20):
         print("Loop:", loop, "alpha:", rep[0], "beta:", rep[1])
-        agents = [dnq.Agent(alpha=rep[0], beta=rep[1], doubleQ=True)
+        agents = [dnq.Agent(alpha=rep[0], beta=rep[1])
                   for _ in range(2)]
         env = dnq.Env()
 
@@ -19,76 +19,26 @@ for rep in [[0.025, 10**(-6)], [0.1, 0.5*10**(-5)], [0.2, 10**(-5)], [0.05, 1.5*
         prices = []
 
         # Initialization of prices p0 (done directly in each agent)
+        state = []
         for agent in agents:
-            agent.p = np.random.choice(agent.A)
+            action = np.random.choice(agent.A)
+            state.append(action)
 
-        # Initialization of state
-        s_t = env([agent.p for agent in agents])[1]
-        for agent in agents:
-            agent.s_t = s_t
+        reward = []
+        quant, price, cost = env(state)
+        re = quant*price - quant*cost
+        reward.append(re)
 
-        s_ind = agents[0].find_index(agents[0].s_t)
-        for agent in agents:
-            agent.s_ind = s_ind
+        for i, agent in enumerate(agents):
+            agent.transition(state, action, reward, state_1)
 
-        # Iterative phase
-        for t in range(10**6):
-            if t % (2*10**5) == 0:
-                inter_start = time.time()
-                print("t:", t)
+        for t in range(10):
 
-            # Actions and state at t+1
+            state_1 = []
             for agent in agents:
-                action = agent.choose_action(observation)
-                ret = env(s_t1)
-                quant, price, cost = ret
+                action = agent.get_next_action(state)
+                state_1.append(action)
 
-                observation_, reward, done, info = env.step(action)
-                score += reward
-                agent.store_transition(observation, action, reward,
-                                       observation_, done)
-                agent.learn()
-                observation = observation_
-
-                agent.a_ind = agent.get_next_action()
-
-            s_t1 = env([agent.A[agent.a_ind] for agent in agents])[1]
-            for agent in agents:
-                agent.s_t1 = s_t1
-
-            s_ind1 = agents[0].find_index(agents[0].s_t1)
-            for agent in agents:
-                agent.s_ind1 = s_ind1
-
-            temps.append(t)
-            ret = env(s_t1)
-            quant, price, cost = ret
-
-            re = ret[0]*ret[1]-ret[0]*ret[2]
-            rewards.append(re)
-            epsilon_values = [agent.epsilon for agent in agents]
-            epsilon.append(epsilon_values)
-            prices.append([agent.p for agent in agents])
-
-            for i, agent in enumerate(agents):
-                agent.updateQ(q=quant[i], p=price[i], c=cost[i], t=t)
-
-            if t % (2*10**5) == 0:
-                inter_end = time.time()
-                time_data.append(inter_end-inter_start)
-                print('average CPU', np.mean(time_data))
-
-        total_rewards.append(rewards)
-
-    aggregated_agents.append(np.array(total_rewards))
-
-end = time.time()
-
-with open('data_dQ.pkl', 'wb') as f:
-    pickle.dump(aggregated_agents, f)
-
-print(aggregated_agents)
-print(end-start)
 
 if __name__ == '__main__':
     env = dnq.Env()

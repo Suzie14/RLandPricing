@@ -12,7 +12,7 @@ class Agent:
         self.k = 1
         self.binary_demand = binary_demand
         if pN == None or pC == None:
-            self.pC, self.pN = self.getPrices()
+            self.pC, self.pN = self._get_prices()
         else:
             self.pC, self.pN = pC, pN
         self.Xi = 0.1
@@ -57,7 +57,7 @@ class Agent:
         self.s_ind1 = None
         self.s_t1 = None
 
-    def getPrices(self):
+    def _get_prices(self):
         prices = pr.PriceOptimizer(
             nb_players=self.n, binary_demand=self.binary_demand)
         collusion_price, nash_price = prices()
