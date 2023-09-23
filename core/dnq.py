@@ -10,6 +10,22 @@ import torch.nn.functional as F
 import core.prices as pr
 
 
+class ReplayMemory:
+
+    def __init__(self, capacity):
+        self.memory = deque(maxlen=capacity)
+
+    def add(self, experience):
+        self.memory.append(experience)
+
+    def sample(self, batch_size):
+        indices = random.sample(range(len(self.memory)), batch_size)
+        return [self.memory[idx] for idx in indices]
+
+    def __len__(self):
+        return len(self.memory)
+
+
 class DQN(nn.Module):
 
     def __init__(self, n_states, n_actions, fct1_dim=128, fct2_dim=128):

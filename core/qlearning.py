@@ -57,6 +57,11 @@ class Agent:
         self.s_ind1 = None
         self.s_t1 = None
 
+        # When we want to stop when it convergs
+        self.past_pairs = {}
+        self.done = False
+        self.cnt = 0
+
     def _get_prices(self):
         prices = pr.PriceOptimizer(
             nb_players=self.n, binary_demand=self.binary_demand)
@@ -106,6 +111,18 @@ class Agent:
         s_ind = sum((ord(char) - 65) * (15 ** (self.n - 1 - i))
                     for i, char in enumerate(strongstring))
         return s_ind
+
+    def final_state(self, iterat=10**5):
+        if self.done == False:
+            if self.s_ind in self.past_pairs and self.past_pairs[self.s_ind] == self.a_ind:
+                self.cnt += 1
+
+            else:
+                self.cnt = 0
+                self.past_pairs[self.s_ind] = self.a_ind
+
+            if self.cnt >= iterat:
+                self.done = True
 
 
 class Env:
