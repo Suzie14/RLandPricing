@@ -87,7 +87,7 @@ for rep in [[0.025, 10**(-6)], [0.1, 0.5*10**(-5)], [0.2, 10**(-5)], [0.05, 1.5*
 
 end = time.time()
 
-with open('data_rep.pkl', 'wb') as f:
+with open('data_rep_cv.pkl', 'wb') as f:
     pickle.dump(aggregated_agents, f)
 
 print(aggregated_agents)
