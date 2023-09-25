@@ -37,7 +37,7 @@ for rep in [[0.025, 10**(-6)], [0.1, 0.5*10**(-5)], [0.2, 10**(-5)], [0.05, 1.5*
         t = 0
         done_forall = False
         # Iterative phase
-        while not done_forall:
+        while not done_forall and t < 5*(10**6):
             if t % (2*10**5) == 0:
                 inter_start = time.time()
                 print("t:", t)
