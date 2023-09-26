@@ -6,10 +6,12 @@ from core import qlearning as q
 
 
 start = time.time()
-aggregated_agents = []
+final_rewards_all = []
+mean_lc = []
 time_data = []
 for rep in [[0.025, 10**(-6)], [0.1, 0.5*10**(-5)], [0.2, 10**(-5)], [0.05, 1.5*10**(-5)], [0.2, 10**(-6)]]:
-    total_rewards = []
+    final_rewards = []
+    store_rewards_lc = []
 
     for loop in range(20):
         print("Loop:", loop, "alpha:", rep[0], "beta:", rep[1])
@@ -18,7 +20,8 @@ for rep in [[0.025, 10**(-6)], [0.1, 0.5*10**(-5)], [0.2, 10**(-5)], [0.05, 1.5*
         env = q.Env()
 
         temps = []
-        rewards = []
+        last_100_values = [[None, None]] * 100
+        rewards_lc = []
         epsilon = []
         prices = []
 
@@ -38,7 +41,6 @@ for rep in [[0.025, 10**(-6)], [0.1, 0.5*10**(-5)], [0.2, 10**(-5)], [0.05, 1.5*
         t = 0
         done_forall = False
         # Iterative phase
-
         while not done_forall and t < 5*(10**6):
 
             if t % (2*10**5) == 0:
@@ -68,7 +70,11 @@ for rep in [[0.025, 10**(-6)], [0.1, 0.5*10**(-5)], [0.2, 10**(-5)], [0.05, 1.5*
             quant, price, cost = ret
 
             re = ret[0]*ret[1]-ret[0]*ret[2]
-            rewards.append(re)
+
+            last_100_values.append(re)
+            last_100_values.pop(0)
+            if t % 100 == 0:
+                rewards_lc.append(re)
             epsilon_values = [agent.epsilon for agent in agents]
             epsilon.append(epsilon_values)
             prices.append([agent.p for agent in agents])
@@ -82,16 +88,25 @@ for rep in [[0.025, 10**(-6)], [0.1, 0.5*10**(-5)], [0.2, 10**(-5)], [0.05, 1.5*
                 print('average CPU', np.mean(time_data))
 
             t += 1
-
-        total_rewards.append(rewards)
+        rewards_lc = np.array(rewards_lc)
+        if len(rewards_lc) < 50000:
+            rewards_lc = np.pad(rewards_lc, (0, 50000-len(rewards_lc)),
+                                mode='constant', constant_values=rewards_lc[-1])
+        store_rewards_lc.append(rewards_lc)
+        final_rewards.append(last_100_values)
         print('DONE, sample = ', loop+1, ', duration = ', t, ' periods')
+    store_rewards_lc = np.array(store_rewards_lc)
+    mean_lc.append(store_rewards_lc.mean(axis=0))
+    final_rewards_all.append(final_rewards)
 
-    aggregated_agents.append(total_rewards)
 
 end = time.time()
 
-with open('data_dQ_cv.pkl', 'wb') as f:
-    pickle.dump(aggregated_agents, f)
+with open('lc_dQ_cv.pkl', 'wb') as f:
+    pickle.dump(mean_lc, f)
 
-print(aggregated_agents)
+with open('final_dQ_cv.pkl', 'wb') as f:
+    pickle.dump(final_rewards_all, f)
+
+print(final_rewards_all)
 print(end-start)

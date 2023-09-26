@@ -79,11 +79,11 @@ class Agent:
         else:
             return np.random.randint(self.m)
 
-    def get_reward(self, q, p, c):
+    def _get_reward(self, q, p, c):
         return (p-c)*q
 
     def updateQ(self, p, q, c, t):  # upateQ
-        reward = self.get_reward(q, p, c)
+        reward = self._get_reward(q, p, c)
 
         if self.doubleQ:
             if np.random.random() < 0.5:
