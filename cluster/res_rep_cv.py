@@ -92,3 +92,5 @@ with open('data_rep_cv.pkl', 'wb') as f:
 
 print(aggregated_agents)
 print(end-start)
+# NE CALCULER QUE LES STATISTIQUES AGREGEES
+# moyenne, mediane, sd
