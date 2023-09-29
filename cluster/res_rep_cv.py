@@ -42,7 +42,7 @@ for rep in [[0.025, 10**(-6)], [0.1, 0.5*10**(-5)], [0.2, 10**(-5)], [0.05, 1.5*
         # Iterative phase
         while not done_forall:
 
-            if t > 5*(10**6)-1:
+            if t >= 5*(10**6):
                 break
 
             if t % (2*(10**5)) == 0:
@@ -96,7 +96,7 @@ for rep in [[0.025, 10**(-6)], [0.1, 0.5*10**(-5)], [0.2, 10**(-5)], [0.05, 1.5*
         if len(rewards_lc) < max_length_rlc:
             rewards_lc = np.vstack(rewards_lc)
             pad = np.tile(rewards_lc[-1], (max_length_rlc-len(rewards_lc), 1))
-            np.vstack((rewards_lc, pad))
+            rewards_lc = np.vstack((rewards_lc, pad))
         store_rewards_lc.append(rewards_lc)
         final_rewards.append(last_100_values)
         print('DONE, sample = ', loop+1, ', duration = ', t, ' periods')
