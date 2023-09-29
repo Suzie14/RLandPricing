@@ -42,7 +42,7 @@ for rep in [[0.025, 10**(-6)], [0.1, 0.5*10**(-5)], [0.2, 10**(-5)], [0.05, 1.5*
         # Iterative phase
         while not done_forall:
 
-            if t > 5*(10**6):
+            if t > 5*(10**6)-1:
                 break
 
             if t % (2*(10**5)) == 0:
