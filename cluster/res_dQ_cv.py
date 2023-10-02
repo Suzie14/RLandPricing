@@ -41,11 +41,15 @@ for rep in [[0.025, 10**(-6)], [0.1, 0.5*10**(-5)], [0.2, 10**(-5)], [0.05, 1.5*
         t = 0
         done_forall = False
         # Iterative phase
-        while not done_forall and t < 5*(10**6):
+        while not done_forall:
 
-            if t % (2*10**5) == 0:
+            if t >= 5*(10**6):
+                break
+
+            if t % (2*(10**5)) == 0:
                 inter_start = time.time()
                 print("t:", t)
+
             # Actions and state at t+1
             nb_done = 0
             for agent in agents:
@@ -82,23 +86,24 @@ for rep in [[0.025, 10**(-6)], [0.1, 0.5*10**(-5)], [0.2, 10**(-5)], [0.05, 1.5*
             for i, agent in enumerate(agents):
                 agent.updateQ(q=quant[i], p=price[i], c=cost[i], t=t)
 
-            if t % (2*10**5) == 0:
+            if t % (2*(10**5)) == 0:
                 inter_end = time.time()
                 time_data.append(inter_end-inter_start)
                 print('average CPU', np.mean(time_data))
 
             t += 1
         rewards_lc = np.array(rewards_lc)
-        if len(rewards_lc) < 50000:
-            rewards_lc = np.pad(rewards_lc, (0, 50000-len(rewards_lc)),
-                                mode='constant', constant_values=rewards_lc[-1])
+        max_length_rlc = int(5*(10**6)/100)
+        if len(rewards_lc) < max_length_rlc:
+            rewards_lc = np.vstack(rewards_lc)
+            pad = np.tile(rewards_lc[-1], (max_length_rlc-len(rewards_lc), 1))
+            rewards_lc = np.vstack((rewards_lc, pad))
         store_rewards_lc.append(rewards_lc)
         final_rewards.append(last_100_values)
         print('DONE, sample = ', loop+1, ', duration = ', t, ' periods')
     store_rewards_lc = np.array(store_rewards_lc)
     mean_lc.append(store_rewards_lc.mean(axis=0))
     final_rewards_all.append(final_rewards)
-
 
 end = time.time()
 

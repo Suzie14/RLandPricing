@@ -104,8 +104,6 @@ for rep in [[0.025, 10**(-6)], [0.1, 0.5*10**(-5)], [0.2, 10**(-5)], [0.05, 1.5*
     mean_lc.append(store_rewards_lc.mean(axis=0))
     final_rewards_all.append(final_rewards)
 
-final_rewards_all = np.vstack(final_rewards_all)
-mean_lc = np.vstack(mean_lc)
 end = time.time()
 
 with open('lc_rep_cv.pkl', 'wb') as f:
