@@ -108,7 +108,7 @@ class Agent:
     def find_index(self, s_t):
         strongstring = ''.join(
             [str(self.find_ind.get(price, '')) for price in s_t])
-        s_ind = sum((ord(char) - 65) * (15 ** (self.n - 1 - i))
+        s_ind = sum((ord(char) - 65) * (self.m ** (self.n - 1 - i))
                     for i, char in enumerate(strongstring))
         return s_ind
 
