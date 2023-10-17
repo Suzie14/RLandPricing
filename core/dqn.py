@@ -86,6 +86,12 @@ class DeepAgent:
         self.state = None
         self.reward = None
 
+        # Device and Transition
+        self.device = torch.device(
+            "cuda" if torch.cuda.is_available() else "cpu")
+        self.Transition = namedtuple('Transition',
+                                     ('state', 'action', 'next_state', 'reward'))
+
         # Neural networks
         self.policy_net = DQN(self.n_state, self.m).to(self.device)
         self.target_net = DQN(self.n_state, self.m).to(self.device)
@@ -95,12 +101,6 @@ class DeepAgent:
         self.optimizer = optim.AdamW(
             self.policy_net.parameters(), lr=self.alpha, amsgrad=True)
         self.memory = ReplayMemory(10000)
-
-        # Device and Transition
-        self.device = torch.device(
-            "cuda" if torch.cuda.is_available() else "cpu")
-        self.Transition = namedtuple('Transition',
-                                     ('state', 'action', 'next_state', 'reward'))
 
     def _get_prices(self):
         prices = pr.PriceOptimizer(
