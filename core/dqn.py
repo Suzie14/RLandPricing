@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import torch
 import numpy as np
+import random
 
 import torch
 import torch.nn as nn
@@ -12,18 +13,16 @@ from collections import namedtuple, deque
 import core.prices as pr
 
 
-Transition = namedtuple('Transition',
-                        ('state', 'action', 'next_state', 'reward'))
-
-
-class ReplayMemory(object):
+class ReplayMemory:
 
     def __init__(self, capacity):
+        self.Transition = namedtuple('Transition',
+                                     ('state', 'action', 'next_state', 'reward'))
         self.memory = deque([], maxlen=capacity)
 
     def push(self, *args):
         """Save a transition"""
-        self.memory.append(Transition(*args))
+        self.memory.append(self.Transition(*args))
 
     def sample(self, batch_size):
         return random.sample(self.memory, batch_size)
@@ -48,27 +47,26 @@ class DQN(nn.Module):
         return self.layer3(x)
 
 
-class Agent:
-    def __init__(self, nb_players=2, alpha=0.125, beta=10**(-5), delta=0.95, pN=None, pC=None, binary_demand=False, max_mem_size=1000, batch_size=32):
-        self.m = 15
-        self.n = nb_players
-
-        # memory k : we can now change it
-        self.mem_size = max_mem_size
-        # self.mem_count = 0
-        # self.batch_size = batch_size
-
-        # state doesn't depend directly of the past states
-        self.n_states = (self.m**(self.n*self.mem_size))
-
-        # hyperparameters
-        self.epsilon = 1
+class DeepAgent:
+    def __init__(self, nb_players=2, alpha=1e-4, eps_start=0.9, eps_end=0.05, eps_decay=1000, gamma=0.99, pN=None, pC=None, binary_demand=False, m=15):
+        # Hyperparameters
         self.alpha = alpha
-        self.beta = beta
-        self.delta = delta
+        self.eps_start = eps_start
+        self.eps_end = eps_end
+        self.eps_decay = eps_decay
+        self.batch_size = 128
+        self.gamma = gamma
         self.tau = 0.005
 
+        # Size of action and state spaces
+        self.m = m
+        self.n_state = nb_players
+        self.n = nb_players
+
+        # Demand function
         self.binary_demand = binary_demand
+
+        # Action space's definition
         if pN == None or pC == None:
             self.pC, self.pN = self._get_prices()
         else:
@@ -80,15 +78,29 @@ class Agent:
         for i in range(self.m):
             self.A[i] = self.p1 + i*(self.pm-self.p1)/(self.m-1)
 
-        self.Q_eval = DQN(n_states=self.n_states,
-                          n_actions=self.m, alpha=self.alpha)
-        self.optimizer = optim.Adam(self.parameters(), lr=alpha)
-
-        self.states = np.zeros((self.mem_size, *self.n_states), np.float32)
-        self.a_ind = None
-        self.reward = None
-        self.s_t1 = None
+        # Selected action and associated index
         self.p = None
+        self.a_ind = None
+
+        # State and reward, given by the environment
+        self.state = None
+        self.reward = None
+
+        # Neural networks
+        self.policy_net = DQN(self.n_state, self.m).to(self.device)
+        self.target_net = DQN(self.n_state, self.m).to(self.device)
+        self.target_net.load_state_dict(self.policy_net.state_dict())
+
+        # Optimizer and memory
+        self.optimizer = optim.AdamW(
+            self.policy_net.parameters(), lr=self.alpha, amsgrad=True)
+        self.memory = ReplayMemory(10000)
+
+        # Device and Transition
+        self.device = torch.device(
+            "cuda" if torch.cuda.is_available() else "cpu")
+        self.Transition = namedtuple('Transition',
+                                     ('state', 'action', 'next_state', 'reward'))
 
     def _get_prices(self):
         prices = pr.PriceOptimizer(
@@ -96,109 +108,77 @@ class Agent:
         collusion_price, nash_price = prices()
         return collusion_price, nash_price
 
-    def get_next_action(self):
-        if np.random.random() < 1 - self.epsilon:
-            state = torch.tensor(self.s_t, dtype=torch.float32)
-            q_values = self.Q_eval(state)
-            return q_values.argmax().item()
+    def get_next_action(self, state, t):
+        '''Return the index of the selected action'''
+        sample = random.random()
+        self.eps_threshold = self.eps_end + (self.eps_start - self.eps_end) * \
+            np.exp(-1. * t / self.eps_decay)
+        if sample > self.eps_threshold:
+            with torch.no_grad():
+                # t.max(1) will return the largest column value of each row.
+                # second column on max result is index of where max element was
+                # found, so we pick action with the larger expected reward.
+                return self.policy_net(state).max(1)[1].view(1, 1)
         else:
-            return np.random.choice(self.A)
+            return torch.tensor([[np.random.randint(15)]], device=self.device, dtype=torch.long)
 
-    def _get_reward(self, q, p, c):
-        return (p-c)*q
+    def optimize_model(self):
+        if len(self.memory) < self.batch_size:
+            return
+        transitions = self.memory.sample(self.batch_size)
+        # Transpose the batch (see https://stackoverflow.com/a/19343/3343043 for
+        # detailed explanation). This converts batch-array of Transitions
+        # to Transition of batch-arrays.
+        batch = self.Transition(*zip(*transitions))
 
-    def transition(self, st_1):
-        index = self.mem_count % self.k
-        self.states[index] = st_1
+        # Compute a mask of non-final states and concatenate the batch elements
+        # (a final state would've been the one after which simulation ended)
+        non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
+                                                batch.next_state)), device=self.device, dtype=torch.bool)
+        non_final_next_states = torch.cat([s for s in batch.next_state
+                                           if s is not None])
+        state_batch = torch.cat(batch.state)
+        action_batch = torch.cat(batch.action)
+        reward_batch = torch.cat(batch.reward)
 
-        self.mem_count += 1
+        # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
+        # columns of actions taken. These are the actions which would've been taken
+        # for each batch state according to policy_net
+        state_action_values = self.policy_net(
+            state_batch).gather(1, action_batch)
 
-    def updateQ(self, p, q, c, t):
-        reward = self._get_reward(q, p, c)
+        # Compute V(s_{t+1}) for all next states.
+        # Expected values of actions for non_final_next_states are computed based
+        # on the "older" target_net; selecting their best reward with max(1)[0].
+        # This is merged based on the mask, such that we'll have either the expected
+        # state value or 0 in case the state was final.
+        next_state_values = torch.zeros(self.batch_size, device=self.device)
+        with torch.no_grad():
+            next_state_values[non_final_mask] = self.target_net(
+                non_final_next_states).max(1)[0]
+        # Compute the expected Q values
+        expected_state_action_values = (
+            next_state_values * self.gamma) + reward_batch
 
-        state = torch.tensor(self.s_t, dtype=torch.float32)
-        q_values = self.Q_eval(state)
+        # Compute Huber loss
+        criterion = nn.SmoothL1Loss()
+        loss = criterion(state_action_values,
+                         expected_state_action_values.unsqueeze(1))
 
-        target = reward + self.delta * q_values.max()
-        loss = nn.MSELoss()(q_values[self.a_ind], target)
-
+        # Optimize the model
         self.optimizer.zero_grad()
         loss.backward()
+        # In-place gradient clipping
+        torch.nn.utils.clip_grad_value_(self.policy_net.parameters(), 100)
         self.optimizer.step()
 
-        self.p = self.A[self.a_ind]
-        self.s_t = self.s_t1
-        self.epsilon = np.exp(-self.beta * t)
-
-
-BATCH_SIZE = 128
-GAMMA = 0.99
-EPS_START = 0.9
-EPS_END = 0.05
-EPS_DECAY = 1000
-TAU = 0.005
-LR = 1e-4
-
-# Get number of actions from gym action space
-n_actions = env.action_space.n
-# Get the number of state observations
-state, info = env.reset()
-n_observations = len(state)
-
-policy_net = DQN(n_observations, n_actions).to(device)
-target_net = DQN(n_observations, n_actions).to(device)
-target_net.load_state_dict(policy_net.state_dict())
-
-optimizer = optim.AdamW(policy_net.parameters(), lr=LR, amsgrad=True)
-memory = ReplayMemory(10000)
-
-
-steps_done = 0
-
-
-def select_action(state):
-    global steps_done
-    sample = random.random()
-    eps_threshold = EPS_END + (EPS_START - EPS_END) * \
-        math.exp(-1. * steps_done / EPS_DECAY)
-    steps_done += 1
-    if sample > eps_threshold:
-        with torch.no_grad():
-            # t.max(1) will return the largest column value of each row.
-            # second column on max result is index of where max element was
-            # found, so we pick action with the larger expected reward.
-            return policy_net(state).max(1)[1].view(1, 1)
-    else:
-        return torch.tensor([[env.action_space.sample()]], device=device, dtype=torch.long)
-
-
-episode_durations = []
-
-
-def plot_durations(show_result=False):
-    plt.figure(1)
-    durations_t = torch.tensor(episode_durations, dtype=torch.float)
-    if show_result:
-        plt.title('Result')
-    else:
-        plt.clf()
-        plt.title('Training...')
-    plt.xlabel('Episode')
-    plt.ylabel('Duration')
-    plt.plot(durations_t.numpy())
-    # Take 100 episode averages and plot them too
-    if len(durations_t) >= 100:
-        means = durations_t.unfold(0, 100, 1).mean(1).view(-1)
-        means = torch.cat((torch.zeros(99), means))
-        plt.plot(means.numpy())
-
-    plt.pause(0.001)  # pause a bit so that plots are updated
-    if is_ipython:
-        if not show_result:
-            display.display(plt.gcf())
-            display.clear_output(wait=True)
-        else:
-            display.display(plt.gcf())
+    def update_network(self):
+        self.target_net_state_dict = self.target_net.state_dict()
+        self.policy_net_state_dict = self.policy_net.state_dict()
+        for key in self.policy_net_state_dict:
+            self.target_net_state_dict[key] = self.policy_net_state_dict[key]*self.tau
+            + self.target_net_state_dict[key]*(1-self.tau)
+            self.target_net.load_state_dict(self.target_net_state_dict)
 
 
 class Env:
@@ -242,6 +222,3 @@ class Env:
             return [self.binary_quantity(p), p, self.c]
         else:
             return [self.quantity(p), p, self.c]
-
-    # prendre action et  renvoie la demande
-    # renvoie q, q', p et p'
