@@ -17,7 +17,7 @@ def process(beta, nb_games):
         result['index'] = i+1
         results.append(result)
     results_df = pd.concat(results, ignore_index=True)
-    with open(f'../data/simulation_beta_{beta}.pkl', 'wb') as f:
+    with open(f'data/simulation_beta_{beta}.pkl', 'wb') as f:
         pickle.dump(results_df, f)
 
 
