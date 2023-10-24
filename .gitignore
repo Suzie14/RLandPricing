@@ -11,6 +11,7 @@
 !*.md
 !Papers/*.pdf
 !Papers/**/*.pdf
+!*.sh
 # etc...
 
 # ...even if they are in subdirectories
