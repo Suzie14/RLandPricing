@@ -38,7 +38,7 @@ class StateMapper:
 
 class Agent:
 
-    def __init__(self, nb_players=2, alpha=0.125, beta=10**(-5), delta=0.95, pN=None, pC=None, binary_demand=False, doubleQ=False):
+    def __init__(self, nb_players=2, alpha=0.05, beta=10**(-5), delta=0.95, pN=None, pC=None, binary_demand=False, doubleQ=False):
         self.m = 15
         self.n = nb_players
         self.k = 1
@@ -93,13 +93,6 @@ class Agent:
             nb_players=self.n, binary_demand=self.binary_demand)
         collusion_price, nash_price = prices()
         return collusion_price, nash_price
-
-    def _set_action_dict(self):
-        self.action_dict = dict(zip(np.arange(0, self.n_actions),
-                                    self.find_ind.bins))
-
-    def translate_action(self, action):
-        return self.action_dict[action]
 
     def get_next_action(self):
         if self.doubleQ:
@@ -188,6 +181,6 @@ class Env:
 
     def __call__(self, p):
         if self.binary_demand:
-            return [self.binary_quantity(p), p, self.c]
+            return [self.binary_quantity(p), p, self.c_values]
         else:
             return [self.quantity(p), p, self.c_values]
