@@ -38,7 +38,7 @@ class StateMapper:
 
 class Agent:
 
-    def __init__(self, nb_players=2, alpha=0.125, beta=10**(-5), delta=0.95, pN=None, pC=None, binary_demand=False, doubleQ=False):
+    def __init__(self, nb_players=2, alpha=0.05, beta=10**(-5), delta=0.95, pN=None, pC=None, binary_demand=False, doubleQ=False):
         self.m = 15
         self.n = nb_players
         self.k = 1
