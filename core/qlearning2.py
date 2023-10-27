@@ -12,7 +12,7 @@ class StateMapper:
 
         self.bins = np.round(np.linspace(lower - xi*(upper-lower),
                                          upper + xi*(upper-lower),
-                                         num_bins), 15)
+                                         num_bins), 4)
 
         self.bin_idx = [str(k).zfill(2) for k in np.arange(0, num_bins)]
 
@@ -50,7 +50,7 @@ class Agent:
         self.Xi = 0.1
         self.p1 = self.pN-self.Xi*(self.pC-self.pN)
         self.pm = self.pC+self.Xi*(self.pC-self.pN)
-        self.A = np.round(np.linspace(self.p1, self.pm, self.m), 15)
+        self.A = np.round(np.linspace(self.p1, self.pm, self.m), 4)
 
         self.doubleQ = doubleQ
 
