@@ -67,6 +67,7 @@ class Agent:
             self.Q = np.random.uniform(size=(self.m, self.m**(self.n*self.k)),
                                        low=-0.5,
                                        high=0.5)
+        self.Q_count = np.zeros((self.m, self.m**(self.n*self.k)))
 
         self.epsilon = 1
         self.alpha = alpha
@@ -121,6 +122,7 @@ class Agent:
             diff = reward + self.delta*max_value - q_value
             q_value += self.alpha*diff
             self.Q[self.a_ind, self.s_ind] = q_value
+        self.Q_count[self.a_ind, self.s_ind] += 1
 
     def transition(self, t):
         self.p = self.A[self.a_ind]

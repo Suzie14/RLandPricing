@@ -90,6 +90,11 @@ class Interaction:
             agent.transition(t)
 
         return rewards, prices, epsilon_values
+    
+    def getQs(self):
+        Q_count = pd.concat([pd.DataFrame(agent.Q_count) for agent in self.agents], axis =1)
+        Q_values = pd.concat([pd.DataFrame(agent.Q) for agent in self.agents], axis=1)
+        return pd.concat([Q_count, Q_values])
 
     def __call__(self, nb_iterations):
         self._init_agents()
