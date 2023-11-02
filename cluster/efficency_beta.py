@@ -24,9 +24,9 @@ def process(beta, nb_games):
     results_df = pd.concat(results, ignore_index=True)
     Qs_df = pd.concat(get_all_Qs, ignore_index=True)
 
-    with open(f'data/simulation_beta_{beta}.pkl', 'wb') as f:
+    with open(f'data_sim/simulation_beta_{beta}.pkl', 'wb') as f:
         pickle.dump(results_df, f)
-    with open(f'data/Q_values_beta_{beta}.pkl', 'wb') as l:
+    with open(f'data_Q/Q_values_beta_{beta}.pkl', 'wb') as l:
         pickle.dump(Qs_df, l)
     
 
