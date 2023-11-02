@@ -38,5 +38,5 @@ betas = [7.5*10**(-3), 5*10**(-3), 2.5*10**(-3), 10**(-3), 7.5*10**(-4), 5*10**(
 no_process = multiprocessing.cpu_count()
 print(f'number of cores detected :{no_process}')
 
-Parallel(n_jobs=no_process)(delayed(process)(beta, 10**(3))
+Parallel(n_jobs=no_process)(delayed(process)(beta, 10**(7))
                             for beta in betas)
