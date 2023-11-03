@@ -12,7 +12,7 @@ def process(beta, nb_games):
     get_all_Qs = []
     for i in range(10):
         np.random.seed(i)
-        game = interact.Interaction(beta=[beta,10**5])
+        game = interact.Interaction(beta=[beta,10**(-5)])
         result = game(nb_iterations=nb_games)
         result['beta'] = beta
         result['index'] = i+1
