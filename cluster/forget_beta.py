@@ -14,7 +14,10 @@ def process(beta, nb_games, path1, path2):
         np.random.seed(i)
         game = interact.Interaction(beta=beta)
         result = game(nb_iterations=nb_games)
-        result['beta'] = beta
+        if not isinstance(beta, float): 
+            result['beta'] = beta[0]
+        else: 
+            result['beta'] = beta
         result['index'] = i+1
         results.append(result)
         getQs = game.getQs()
@@ -42,4 +45,4 @@ paths2 = ['data/data_Q/Q_values_beta_10e-06.pkl','data/data_Qbis/Q_values_beta_1
 no_process = multiprocessing.cpu_count()
 print(f'number of cores detected :{no_process}')
 
-Parallel(n_jobs=no_process)(delayed(process)(beta, 10**(7), path1, path2) for beta, path1, path2 in zip(betas, paths1, paths2))
+Parallel(n_jobs=no_process)(delayed(process)(beta, 10**(3), path1, path2) for beta, path1, path2 in zip(betas, paths1, paths2))
