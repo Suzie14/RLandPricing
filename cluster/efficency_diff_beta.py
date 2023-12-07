@@ -1,8 +1,8 @@
 import core.interactions as interact
 import pandas as pd
 import pickle
-import numpy as np
 import multiprocessing
+import numpy as np
 
 from joblib import Parallel, delayed
 
@@ -12,7 +12,7 @@ def process(beta, nb_games):
     get_all_Qs = []
     for i in range(10):
         np.random.seed(i)
-        game = interact.Interaction(beta=[beta,10**(-5)])
+        game = interact.Interaction(beta=[beta, 10**(-5)])
         result = game(nb_iterations=nb_games)
         result['beta'] = beta
         result['index'] = i+1
@@ -28,7 +28,6 @@ def process(beta, nb_games):
         pickle.dump(results_df, f)
     with open(f'data/data_Qbis/Q_values_beta_{beta}.pkl', 'wb') as l:
         pickle.dump(Qs_df, l)
-    
 
 
 betas = [7.5*10**(-3), 5*10**(-3), 2.5*10**(-3), 10**(-3), 7.5*10**(-4), 5*10**(-4), 2.5*10**(-4), 10**(-4), 7.5*10**(-5), 5 *
